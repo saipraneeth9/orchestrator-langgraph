@@ -34,6 +34,11 @@ def source_trust_node(state):
 
     retrieval_results = state.get("retrieval_results", [])
 
+    performance_lookup = {
+        performance.source: performance.performance_score
+        for performance in state.get("source_performance", [])
+    }
+
     with Timer() as timer:
         source_trust = []
 
@@ -92,6 +97,16 @@ def source_trust_node(state):
                 2,
             )
 
+            performance_score = performance_lookup.get(
+                response.source,
+                0.50,
+            )
+
+            effective_trust = round(
+                (trust_score * 0.70) + (performance_score * 0.30),
+                2,
+            )
+
             source_trust.append(
                 SourceTrust(
                     source=response.source,
@@ -100,11 +115,13 @@ def source_trust_node(state):
                     source_type_confidence=source_type_confidence,
                     coverage_score=coverage_score,
                     trust_score=trust_score,
+                    performance_score=performance_score,
+                    effective_trust=effective_trust,
                 )
             )
 
         source_trust.sort(
-            key=lambda x: x.trust_score,
+            key=lambda x: x.effective_trust,
             reverse=True,
         )
 
@@ -114,7 +131,7 @@ def source_trust_node(state):
         ):
             trust.trust_rank = index
 
-            trust.trust_tier = determine_trust_tier(trust.trust_score)
+            trust.trust_tier = determine_trust_tier(trust.effective_trust)
 
     return {
         "source_trust": source_trust,
