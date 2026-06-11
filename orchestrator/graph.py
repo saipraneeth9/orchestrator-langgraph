@@ -87,6 +87,10 @@ from orchestrator.answer_topology import (
     answer_topology_node,
 )
 
+from orchestrator.source_performance import (
+    source_performance_node,
+)
+
 # --------------------------------------------------
 # Graph Builder
 # --------------------------------------------------
@@ -197,6 +201,11 @@ builder.add_node(
     "source_trust",
     source_trust_node,
 )
+
+builder.add_node(
+    "source_performance",
+    source_performance_node,
+)
 # --------------------------------------------------
 # Main Flow
 # --------------------------------------------------
@@ -260,6 +269,11 @@ builder.add_edge(
 
 builder.add_edge(
     "answer_classifier",
+    "source_performance",
+)
+
+builder.add_edge(
+    "source_performance",
     "source_trust",
 )
 

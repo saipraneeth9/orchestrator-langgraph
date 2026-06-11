@@ -70,8 +70,6 @@ class OrchestratorState(TypedDict):
 
     answer_topology: AnswerTopology
 
-    source_trust: list
-
     aggregated_answers: AggregatedAnswers
 
     validation_result: ValidationResult

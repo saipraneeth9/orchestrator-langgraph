@@ -12,91 +12,77 @@ from schemas.answer_type import (
     AnswerType,
 )
 
+from schemas.source_performance import (
+    SourcePerformance,
+)
 
 state = {
 
     "classified_responses": [
 
         NormalizedAgentResponse(
-
             source="servicenow",
-
-            answer=(
-                "PTO approvals are failing "
-                "due to integration latency."
-            ),
-
-            answer_type=
-                AnswerType.ROOT_CAUSE,
+            answer="PTO approvals are failing due to integration latency.",
+            answer_type=AnswerType.ROOT_CAUSE,
         ),
 
         NormalizedAgentResponse(
-
             source="confluence",
-
-            answer=(
-                "Approvals are processed "
-                "through Workday."
-            ),
-
-            answer_type=
-                AnswerType.PROCESS,
+            answer="Approvals are processed through Workday.",
+            answer_type=AnswerType.PROCESS,
         ),
 
         NormalizedAgentResponse(
-
             source="sharepoint",
-
-            answer=(
-                "Employees receive "
-                "20 PTO days annually."
-            ),
-
-            answer_type=
-                AnswerType.POLICY,
+            answer="Employees receive 20 PTO days annually.",
+            answer_type=AnswerType.POLICY,
         ),
 
         NormalizedAgentResponse(
-
             source="barnum",
+            answer="Several users reported intermittent approval delays.",
+            answer_type=AnswerType.OBSERVATION,
+        ),
+    ],
 
-            answer=(
-                "Several users reported "
-                "intermittent approval delays."
-            ),
+    "source_performance": [
 
-            answer_type=
-                AnswerType.OBSERVATION,
+        SourcePerformance(
+            source="servicenow",
+            performance_score=0.87,
+        ),
+
+        SourcePerformance(
+            source="confluence",
+            performance_score=0.73,
+        ),
+
+        SourcePerformance(
+            source="sharepoint",
+            performance_score=0.62,
+        ),
+
+        SourcePerformance(
+            source="barnum",
+            performance_score=0.27,
         ),
     ]
 }
 
-result = source_trust_node(
-    state
-)
+result = source_trust_node(state)
 
 print("\n")
 print("=" * 100)
 print("SOURCE TRUST")
 print("=" * 100)
 
-for trust in result[
-    "source_trust"
-]:
-
-    pprint(
-        trust.model_dump()
-    )
+for trust in result["source_trust"]:
+    pprint(trust.model_dump())
 
 print("\n")
 print("=" * 100)
 print("EXECUTION TRACE")
 print("=" * 100)
 
-for event in result[
-    "execution_trace"
-]:
-
-    pprint(
-        event.model_dump()
-    )
+for event in result["execution_trace"]:
+    pprint(event.model_dump())

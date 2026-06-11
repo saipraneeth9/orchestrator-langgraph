@@ -1,5 +1,9 @@
 from pprint import pprint
 
+from schemas.source_trust import (
+    SourceTrust,
+)
+
 from orchestrator.strategy_router import (
     strategy_router,
 )
@@ -38,44 +42,69 @@ def run_direct_response():
 
     state = {
 
-        "response_strategy":
-            ResponseStrategy.DIRECT_RESPONSE,
+    "response_strategy":
+        ResponseStrategy.DIRECT_RESPONSE,
 
-        "aggregated_answers":
+    "aggregated_answers":
 
-            AggregatedAnswers(
+        AggregatedAnswers(
 
-                primary_answer=
+            primary_answer=
 
-                    NormalizedAgentResponse(
+                NormalizedAgentResponse(
 
-                        source="servicenow",
+                    source="servicenow",
 
-                        answer=(
-                            "Integration latency "
-                            "caused PTO failures."
-                        ),
+                    answer=(
+                        "Integration latency "
+                        "caused PTO failures."
                     ),
+                ),
 
-                supporting_answers=[],
+            supporting_answers=[],
 
-                conflict_analysis=
+            conflict_analysis=
 
-                    ConflictAnalysis(
+                ConflictAnalysis(
 
-                        conflict_detected=False,
+                    conflict_detected=False,
 
-                        consensus_score=1.0,
+                    consensus_score=1.0,
 
-                        minimum_similarity=1.0,
+                    minimum_similarity=1.0,
 
-                        average_similarity=1.0,
+                    average_similarity=1.0,
 
-                        confidence_score=1.0,
-                    ),
-            ),
-    }
+                    confidence_score=1.0,
+                ),
+        ),
 
+    "source_trust": [
+
+        SourceTrust(
+
+            source="servicenow",
+
+            base_authority=1.0,
+
+            evidence_strength=0.0,
+
+            source_type_confidence=1.0,
+
+            coverage_score=0.0,
+
+            trust_score=0.85,
+
+            performance_score=0.87,
+
+            effective_trust=0.86,
+
+            trust_rank=1,
+
+            trust_tier="HIGH",
+        )
+    ],
+}
     route = strategy_router(
         state
     )

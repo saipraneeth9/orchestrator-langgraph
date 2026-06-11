@@ -14,13 +14,24 @@ from utils.tracing import (
     Timer,
 )
 
+from utils.trust import (
+    get_trust_gap,
+)
+
 
 def answer_aggregator_node(state):
 
-    responses = state.get("classified_responses", [])
+    responses = state.get(
+        "classified_responses",
+        [],
+    )
 
     source_trust = {
-        trust.source: trust.trust_score for trust in state.get("source_trust", [])
+        trust.source: trust.effective_trust
+        for trust in state.get(
+            "source_trust",
+            [],
+        )
     }
 
     if not responses:
@@ -39,9 +50,13 @@ def answer_aggregator_node(state):
         }
 
     with Timer() as timer:
+
         ranked_responses = sorted(
             responses,
-            key=lambda response: source_trust.get(response.source, 0.5),
+            key=lambda response: source_trust.get(
+                response.source,
+                0.5,
+            ),
             reverse=True,
         )
 
@@ -49,12 +64,26 @@ def answer_aggregator_node(state):
 
         supporting_answers = ranked_responses[1:]
 
-        conflict_analysis = analyze_conflicts(ranked_responses)
+        conflict_analysis = analyze_conflicts(
+            ranked_responses
+        )
 
         aggregated_answers = AggregatedAnswers(
             primary_answer=primary_answer,
             supporting_answers=supporting_answers,
             conflict_analysis=conflict_analysis,
+        )
+
+        trust_gap = get_trust_gap(
+            primary_answer.source,
+            [
+                answer.source
+                for answer in supporting_answers
+            ],
+            state.get(
+                "source_trust",
+                [],
+            ),
         )
 
     return {
@@ -63,25 +92,39 @@ def answer_aggregator_node(state):
             TraceEvent(
                 node="answer_aggregator",
                 status="success",
-                duration_ms=round(timer.duration_ms, 2),
+                duration_ms=round(
+                    timer.duration_ms,
+                    2,
+                ),
                 metadata={
-                    "responses": len(ranked_responses),
-                    "primary_source": primary_answer.source,
-                    "primary_source_trust": source_trust.get(
-                        primary_answer.source, 0.5
+                    "responses": len(
+                        ranked_responses
                     ),
-                    "trust_gap": round(
-                        source_trust.get(primary_answer.source, 0.5)
-                        - source_trust.get(supporting_answers[0].source, 0.5),
-                        2,
-                    )
-                    if supporting_answers
-                    else 1.0,
-                    "conflict_detected": (conflict_analysis.conflict_detected),
-                    "consensus_score": (conflict_analysis.consensus_score),
-                    "confidence_score": (conflict_analysis.confidence_score),
-                    "minimum_similarity": (conflict_analysis.minimum_similarity),
-                    "average_similarity": (conflict_analysis.average_similarity),
+                    "primary_source": (
+                        primary_answer.source
+                    ),
+                    "primary_source_trust": (
+                        source_trust.get(
+                            primary_answer.source,
+                            0.5,
+                        )
+                    ),
+                    "trust_gap": trust_gap,
+                    "conflict_detected": (
+                        conflict_analysis.conflict_detected
+                    ),
+                    "consensus_score": (
+                        conflict_analysis.consensus_score
+                    ),
+                    "confidence_score": (
+                        conflict_analysis.confidence_score
+                    ),
+                    "minimum_similarity": (
+                        conflict_analysis.minimum_similarity
+                    ),
+                    "average_similarity": (
+                        conflict_analysis.average_similarity
+                    ),
                 },
             )
         ],

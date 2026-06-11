@@ -16,8 +16,8 @@ class FinalAnswer(BaseModel):
 
     confidence: float
 
+    source_confidence: float
+
     references: list[SourceReference]
 
-    primary_reference: (
-        SourceReference | None
-    )
+    primary_reference: SourceReference | None

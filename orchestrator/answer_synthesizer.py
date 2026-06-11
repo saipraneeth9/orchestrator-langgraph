@@ -15,6 +15,10 @@ from utils.tracing import (
     Timer,
 )
 
+from utils.trust import (
+    get_effective_trust,
+)
+
 
 def answer_synthesizer_node(state):
 
@@ -25,31 +29,21 @@ def answer_synthesizer_node(state):
     if not aggregated_answers:
 
         return {
-
-            "final_answer":
-                FinalAnswer(
-                    answer=
-                        "No agent responses were available.",
-                    confidence=0.0,
-                    references=[],
-                    primary_reference=None,
-                ),
-
+            "final_answer": FinalAnswer(
+                answer="No agent responses were available.",
+                confidence=0.0,
+                source_confidence=0.0,
+                references=[],
+                primary_reference=None,
+            ),
             "execution_trace": [
-
                 TraceEvent(
-
-                    node=
-                        "answer_synthesizer",
-
-                    status=
-                        "no_answers",
-
+                    node="answer_synthesizer",
+                    status="no_answers",
                     duration_ms=0,
-
-                    metadata={}
+                    metadata={},
                 )
-            ]
+            ],
         }
 
     primary_answer = (
@@ -70,7 +64,6 @@ def answer_synthesizer_node(state):
     with Timer() as timer:
 
         answer_blocks = [
-
             f"""
 Source:
 {primary_answer.source}
@@ -83,7 +76,6 @@ Answer:
         for answer in supporting_answers:
 
             answer_blocks.append(
-
                 f"""
 Source:
 {answer.source}
@@ -120,82 +112,50 @@ favor the most authoritative source.
         )
 
         references = [
-
             SourceReference(
-
-                source=
-                    primary_answer.source,
-
-                title=
-                    "Primary Agent Answer",
-
-                evidence_type=
-                    "agent_answer",
+                source=primary_answer.source,
+                title="Primary Agent Answer",
+                evidence_type="agent_answer",
             )
         ]
 
-        final_answer = (
+        source_confidence = get_effective_trust(
+            primary_answer.source,
+            state.get("source_trust", []),
+        )
 
-            FinalAnswer(
-
-                answer=
-                    response.content,
-
-                confidence=
-                    conflict_analysis
-                    .confidence_score,
-
-                references=
-                    references,
-
-                primary_reference=
-                    references[0],
-            )
+        final_answer = FinalAnswer(
+            answer=response.content,
+            confidence=conflict_analysis.confidence_score,
+            source_confidence=source_confidence,
+            references=references,
+            primary_reference=references[0],
         )
 
     return {
-
-        "final_answer":
-            final_answer,
-
+        "final_answer": final_answer,
         "execution_trace": [
-
             TraceEvent(
-
-                node=
-                    "answer_synthesizer",
-
-                status=
-                    "success",
-
-                duration_ms=
-                    round(
-                        timer.duration_ms,
-                        2
-                    ),
-
+                node="answer_synthesizer",
+                status="success",
+                duration_ms=round(
+                    timer.duration_ms,
+                    2,
+                ),
                 metadata={
-
-                    "primary_source":
-                        primary_answer.source,
-
-                    "supporting_answers":
-                        len(
-                            supporting_answers
-                        ),
-
-                    "confidence_score":
-                        (
-                            conflict_analysis
-                            .confidence_score
-                        ),
-
-                    "conflict_detected":
-                        (
-                            conflict_analysis
-                            .conflict_detected
-                        ),
-                }
+                    "primary_source": primary_answer.source,
+                    "supporting_answers": len(
+                        supporting_answers
+                    ),
+                    "confidence_score": (
+                        conflict_analysis
+                        .confidence_score
+                    ),
+                    "conflict_detected": (
+                        conflict_analysis
+                        .conflict_detected
+                    ),
+                },
             )
-        ]
+        ],
     }
